@@ -10,22 +10,24 @@ import UIKit
 
 class ViewController: UITableViewController, UISearchBarDelegate {
 
-    @IBOutlet weak var SchBr: UISearchBar!
+    @IBOutlet weak var searchBar: UISearchBar!
     
-    var repo: [[String: Any]]=[]
+    var repositories: [[String: Any]]=[]
     
-    var task: URLSessionTask?
-    var word: String!
-    var url: String!
-    var idx: Int!
+    var gitHubUrlsessiontask =  GitHubSessionTask()
+    var searchword: String!
+    var repositoryUrl: String!
+    var numberOfCellSelected: Int!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        SchBr.text = "GitHubのリポジトリを検索できるよー"
-        SchBr.delegate = self
+        searchBar.text = "GitHubのリポジトリを検索できるよー"
+        searchBar.delegate = self
+        
+        
     }
-    
+    //MARK: - 検索バーの表示
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         // ↓こうすれば初期のテキストを消せる
         searchBar.text = ""
@@ -33,58 +35,51 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        task?.cancel()
+        gitHubUrlsessiontask.cancel()
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchword = searchBar.text!
         
-        word = searchBar.text!
-        
-        if word.count != 0 {
-            url = "https://api.github.com/search/repositories?q=\(word!)"
-            task = URLSession.shared.dataTask(with: URL(string: url)!) { (data, res, err) in
-                if let obj = try! JSONSerialization.jsonObject(with: data!) as? [String: Any] {
-                    if let items = obj["items"] as? [[String: Any]] {
-                    self.repo = items
-                        DispatchQueue.main.async {
-                            self.tableView.reloadData()
-                        }
-                    }
-                }
+        if searchword.count != 0 {
+            gitHubUrlsessiontask.updateSearchWord(searchword: searchword)
+            gitHubUrlsessiontask.loadRepositories()
+            repositories = gitHubUrlsessiontask.getRepositoriesData()
+                
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
-        // これ呼ばなきゃリストが更新されません
-        task?.resume()
+            // これ呼ばなきゃリストが更新されません
+            gitHubUrlsessiontask.updateRepositories()
         }
-        
     }
-    
+    //MARK: - 別のview contorollerに遷移するときに呼ばれる
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        
+        //segue.identifier == "Detail"の時に情報を送る。
         if segue.identifier == "Detail"{
             let dtl = segue.destination as! ViewController2
-            dtl.vc1 = self
+            dtl.homeVC = self
         }
-        
     }
-    
+    //MARK: - ui table view の設定（表示）
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return repo.count
+        return repositories.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = UITableViewCell()
-        let rp = repo[indexPath.row]
-        cell.textLabel?.text = rp["full_name"] as? String ?? ""
-        cell.detailTextLabel?.text = rp["language"] as? String ?? ""
+        let repository = repositories[indexPath.row]
+        cell.textLabel?.text = repository["full_name"] as? String ?? ""
+        cell.detailTextLabel?.text = repository["language"] as? String ?? ""
         cell.tag = indexPath.row
         return cell
-        
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // 画面遷移時に呼ばれる
-        idx = indexPath.row
+        numberOfCellSelected = indexPath.row
+        //sequeidentifierがdetailであるVCに遷移する。遷移する際にはprepare() methodが呼ばれる
         performSegue(withIdentifier: "Detail", sender: self)
         
     }
