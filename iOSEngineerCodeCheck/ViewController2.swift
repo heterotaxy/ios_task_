@@ -37,7 +37,6 @@ class ViewController2: UIViewController {
     }
     
     func getImagefromRepository(){
-        
         let repositry = homeVC.repositories[homeVC.numberOfCellSelected]
         
         repositryTitle.text = repositry["full_name"] as? String
@@ -45,7 +44,10 @@ class ViewController2: UIViewController {
         if let owner = repositry["owner"] as? [String: Any] {
             if let imgURL = owner["avatar_url"] as? String {
                 URLSession.shared.dataTask(with: URL(string: imgURL)!) { (data, res, err) in
-                    let img = UIImage(data: data!)!
+                    guard let img = UIImage(data: data!) else{
+                        return 
+                    }
+                    
                     DispatchQueue.main.async {
                         self.rpositryImage.image = img
                     }
