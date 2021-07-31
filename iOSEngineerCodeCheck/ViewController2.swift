@@ -30,7 +30,7 @@ class ViewController2: UIViewController {
         
         inLanguage.text = "Written in \(repsitory["language"] as? String ?? "")"
         NumOfStargazzer.text = "\(repsitory["stargazers_count"] as? Int ?? 0) stars"
-        NumofWatch.text = "\(repsitory["wachers_count"] as? Int ?? 0) watchers"
+        NumofWatch.text = "\(repsitory["watchers"] as? Int ?? 0) watchers"
         NumofFork.text = "\(repsitory["forks_count"] as? Int ?? 0) forks"
         Numofissue.text = "\(repsitory["open_issues_count"] as? Int ?? 0) open issues"
         getImagefromRepository()
