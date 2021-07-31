@@ -21,7 +21,7 @@ class ViewController2: UIViewController {
     @IBOutlet weak var NumofFork: UILabel!
     @IBOutlet weak var Numofissue: UILabel!
     
-    var homeVC: ViewController!
+    weak var homeVC: ViewController!
         
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,13 +43,13 @@ class ViewController2: UIViewController {
         
         if let owner = repositry["owner"] as? [String: Any] {
             if let imgURL = owner["avatar_url"] as? String {
-                URLSession.shared.dataTask(with: URL(string: imgURL)!) { (data, res, err) in
+                URLSession.shared.dataTask(with: URL(string: imgURL)!) {[weak self] (data, res, err) in
                     guard let img = UIImage(data: data!) else{
                         return 
                     }
                     
                     DispatchQueue.main.async {
-                        self.rpositryImage.image = img
+                        self?.rpositryImage.image = img
                     }
                 }.resume()
             }

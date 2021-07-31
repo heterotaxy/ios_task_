@@ -7,14 +7,18 @@
 //
 
 import Foundation
+import UIKit
 
 class GitHubSessionTask{
     var repositoryUrl: String?
     var gitHubUrlsessiontask: URLSessionTask?
     var repositories: [[String: Any]]=[]
+    var tv:UITableView?
     
-    func GitHubSessionTask(){}
-    
+    init(tv: UITableView){
+        self.tv = tv
+    }
+    //MARK: - データをjson形式で読み込む
     func loadRepositories(){
         guard let url = URL(string: self.repositoryUrl!) else {
             return
@@ -27,9 +31,26 @@ class GitHubSessionTask{
             }
         }
     }
+    func loadRepositoryImage(){
+        guard let url = URL(string: self.repositoryUrl!) else {
+            return
+        }
+        gitHubUrlsessiontask = URLSession.shared.dataTask(with: url) { (data, res, err) in
+            if let obj = try! JSONSerialization.jsonObject(with: data!) as? [String: Any] {
+                if let items = obj["items"] as? [[String: Any]] {
+                    self.repositories = items
+                }
+            }
+        }
+    }
     
+    //MARK: - session task を送信する際のurlを更新
     func updateSearchWord(searchword :String){
         self.repositoryUrl = "https://api.github.com/search/repositories?q=\(searchword)"
+    }
+    
+    func updateUrltoRepositoryUrl(image url: String){
+        self.repositoryUrl = url
     }
     
     func getRepositoriesData()->[[String: Any]]{

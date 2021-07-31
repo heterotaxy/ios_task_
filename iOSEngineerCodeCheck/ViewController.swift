@@ -14,9 +14,10 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     
     var repositories: [[String: Any]]=[]
     
-    var gitHubUrlsessiontask: GitHubSessionTask = GitHubSessionTask()
+    var gitHubUrlsessiontask: URLSessionTask?
     //search bar のボタンが押された時絶対に値が入る
     var searchword: String!
+    var repositoryUrl: String?
     //nilの状態で利用されることはない
     var numberOfCellSelected: Int!
     
@@ -34,22 +35,33 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        gitHubUrlsessiontask.cancel()
+        gitHubUrlsessiontask?.cancel()
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchword = searchBar.text!
         
         if searchword.count != 0 {
-            gitHubUrlsessiontask.updateSearchWord(searchword: searchword)
-            gitHubUrlsessiontask.loadRepositories()
-            repositories = gitHubUrlsessiontask.getRepositoriesData()
-                
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
+            if let word  = searchword{
+                repositoryUrl = "https://api.github.com/search/repositories?q=\(word)"
+            }
+            guard let url = URL(string: repositoryUrl!) else{
+                return
+            }
+            
+            gitHubUrlsessiontask = URLSession.shared.dataTask(with: url) {[weak self] (data, res, err) in
+                if let obj = try! JSONSerialization.jsonObject(with: data!) as? [String: Any] {
+                    if let items = obj["items"] as? [[String: Any]] {
+                        self?.repositories = items
+                        
+                        DispatchQueue.main.async {
+                            self?.tableView.reloadData()
+                        }
+                    }
+                }
             }
             // これ呼ばなきゃリストが更新されません
-            gitHubUrlsessiontask.updateRepositories()
+            gitHubUrlsessiontask?.resume()
         }
     }
     //MARK: - 別のview contorollerに遷移するときに呼ばれる
@@ -66,8 +78,7 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = UITableViewCell()
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "repository")
         let repository = repositories[indexPath.row]
         cell.textLabel?.text = repository["full_name"] as? String ?? ""
         cell.detailTextLabel?.text = repository["language"] as? String ?? ""
