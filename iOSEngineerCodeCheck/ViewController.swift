@@ -14,9 +14,10 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     
     var repositories: [[String: Any]]=[]
     
-    var gitHubUrlsessiontask =  GitHubSessionTask()
+    var gitHubUrlsessiontask: GitHubSessionTask = GitHubSessionTask()
+    //search bar のボタンが押された時絶対に値が入る
     var searchword: String!
-    var repositoryUrl: String!
+    //nilの状態で利用されることはない
     var numberOfCellSelected: Int!
     
     override func viewDidLoad() {
@@ -24,8 +25,6 @@ class ViewController: UITableViewController, UISearchBarDelegate {
         // Do any additional setup after loading the view.
         searchBar.text = "GitHubのリポジトリを検索できるよー"
         searchBar.delegate = self
-        
-        
     }
     //MARK: - 検索バーの表示
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {

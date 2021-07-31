@@ -16,7 +16,10 @@ class GitHubSessionTask{
     func GitHubSessionTask(){}
     
     func loadRepositories(){
-        gitHubUrlsessiontask = URLSession.shared.dataTask(with: URL(string: self.repositoryUrl!)!) { (data, res, err) in
+        guard let url = URL(string: self.repositoryUrl!) else {
+            return
+        }
+        gitHubUrlsessiontask = URLSession.shared.dataTask(with: url) { (data, res, err) in
             if let obj = try! JSONSerialization.jsonObject(with: data!) as? [String: Any] {
                 if let items = obj["items"] as? [[String: Any]] {
                     self.repositories = items
