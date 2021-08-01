@@ -14,9 +14,10 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     
     var repositories: [[String: Any]]=[]
     
-    var gitHubUrlsessiontask: GitHubSessionTask = GitHubSessionTask()
+    var gitHubUrlsessiontask: LoadRepository?
     //search bar のボタンが押された時絶対に値が入る
     var searchword: String!
+    var repositoryUrl: String?
     //nilの状態で利用されることはない
     var numberOfCellSelected: Int!
     
@@ -25,6 +26,8 @@ class ViewController: UITableViewController, UISearchBarDelegate {
         // Do any additional setup after loading the view.
         searchBar.text = "GitHubのリポジトリを検索できるよー"
         searchBar.delegate = self
+        
+        gitHubUrlsessiontask = LoadRepository(vc: self)
     }
     //MARK: - 検索バーの表示
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
@@ -34,29 +37,26 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        gitHubUrlsessiontask.cancel()
+        gitHubUrlsessiontask?.cancel()
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchword = searchBar.text!
         
-        if searchword.count != 0 {
-            gitHubUrlsessiontask.updateSearchWord(searchword: searchword)
-            gitHubUrlsessiontask.loadRepositories()
-            repositories = gitHubUrlsessiontask.getRepositoriesData()
-                
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
+        if searchword.count != 0{
+            guard let word = searchword else{
+                return
             }
-            // これ呼ばなきゃリストが更新されません
-            gitHubUrlsessiontask.updateRepositories()
+            gitHubUrlsessiontask?.settingTask(searchword: word)
+            //設定さらたタスクを実行
+            gitHubUrlsessiontask?.resume()
         }
     }
     //MARK: - 別のview contorollerに遷移するときに呼ばれる
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         //segue.identifier == "Detail"の時に情報を送る。
         if segue.identifier == "Detail"{
-            let dtl = segue.destination as! ViewController2
+            let dtl = segue.destination as! RepositoryView
             dtl.homeVC = self
         }
     }
@@ -66,8 +66,7 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = UITableViewCell()
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "repository")
         let repository = repositories[indexPath.row]
         cell.textLabel?.text = repository["full_name"] as? String ?? ""
         cell.detailTextLabel?.text = repository["language"] as? String ?? ""

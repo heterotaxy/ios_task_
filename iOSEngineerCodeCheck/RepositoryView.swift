@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController2: UIViewController {
+class RepositoryView: UIViewController {
     
     @IBOutlet weak var rpositryImage: UIImageView!
     
@@ -21,19 +21,15 @@ class ViewController2: UIViewController {
     @IBOutlet weak var NumofFork: UILabel!
     @IBOutlet weak var Numofissue: UILabel!
     
-    var homeVC: ViewController!
+    weak var homeVC: ViewController!
+    var gitHubUrlSessionTask: LoadRepositoryImage?
         
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let repsitory = homeVC.repositories[homeVC.numberOfCellSelected]
-        
-        inLanguage.text = "Written in \(repsitory["language"] as? String ?? "")"
-        NumOfStargazzer.text = "\(repsitory["stargazers_count"] as? Int ?? 0) stars"
-        NumofWatch.text = "\(repsitory["watchers"] as? Int ?? 0) watchers"
-        NumofFork.text = "\(repsitory["forks_count"] as? Int ?? 0) forks"
-        Numofissue.text = "\(repsitory["open_issues_count"] as? Int ?? 0) open issues"
+        gitHubUrlSessionTask = LoadRepositoryImage(vc: self)
         getImagefromRepository()
+        
+        updateUILabel()
     }
     
     func getImagefromRepository(){
@@ -43,16 +39,19 @@ class ViewController2: UIViewController {
         
         if let owner = repositry["owner"] as? [String: Any] {
             if let imgURL = owner["avatar_url"] as? String {
-                URLSession.shared.dataTask(with: URL(string: imgURL)!) { (data, res, err) in
-                    guard let img = UIImage(data: data!) else{
-                        return 
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.rpositryImage.image = img
-                    }
-                }.resume()
+                gitHubUrlSessionTask?.loadRepositoryImage(imageurl: imgURL)
+                gitHubUrlSessionTask?.resume()
             }
         }
+    }
+    
+    func updateUILabel(){
+        let repsitory = homeVC.repositories[homeVC.numberOfCellSelected]
+        
+        inLanguage.text = "Written in \(repsitory["language"] as? String ?? "")"
+        NumOfStargazzer.text = "\(repsitory["stargazers_count"] as? Int ?? 0) stars"
+        NumofWatch.text = "\(repsitory["watchers"] as? Int ?? 0) watchers"
+        NumofFork.text = "\(repsitory["forks_count"] as? Int ?? 0) forks"
+        Numofissue.text = "\(repsitory["open_issues_count"] as? Int ?? 0) open issues"
     }
 }
