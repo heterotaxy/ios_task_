@@ -14,7 +14,7 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     
     var repositories: [[String: Any]]=[]
     
-    var gitHubUrlsessiontask: URLSessionTask?
+    var gitHubUrlsessiontask: LoadRepository?
     //search bar のボタンが押された時絶対に値が入る
     var searchword: String!
     var repositoryUrl: String?
@@ -26,6 +26,8 @@ class ViewController: UITableViewController, UISearchBarDelegate {
         // Do any additional setup after loading the view.
         searchBar.text = "GitHubのリポジトリを検索できるよー"
         searchBar.delegate = self
+        
+        gitHubUrlsessiontask = LoadRepository(vc: self)
     }
     //MARK: - 検索バーの表示
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
@@ -41,26 +43,12 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchword = searchBar.text!
         
-        if searchword.count != 0 {
-            if let word  = searchword{
-                repositoryUrl = "https://api.github.com/search/repositories?q=\(word)"
-            }
-            guard let url = URL(string: repositoryUrl!) else{
+        if searchword.count != 0{
+            guard let word = searchword else{
                 return
             }
-            
-            gitHubUrlsessiontask = URLSession.shared.dataTask(with: url) {[weak self] (data, res, err) in
-                if let obj = try! JSONSerialization.jsonObject(with: data!) as? [String: Any] {
-                    if let items = obj["items"] as? [[String: Any]] {
-                        self?.repositories = items
-                        
-                        DispatchQueue.main.async {
-                            self?.tableView.reloadData()
-                        }
-                    }
-                }
-            }
-            // これ呼ばなきゃリストが更新されません
+            gitHubUrlsessiontask?.settingTask(searchword: word)
+            //設定さらたタスクを実行
             gitHubUrlsessiontask?.resume()
         }
     }
@@ -68,7 +56,7 @@ class ViewController: UITableViewController, UISearchBarDelegate {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         //segue.identifier == "Detail"の時に情報を送る。
         if segue.identifier == "Detail"{
-            let dtl = segue.destination as! ViewController2
+            let dtl = segue.destination as! RepositoryView
             dtl.homeVC = self
         }
     }
